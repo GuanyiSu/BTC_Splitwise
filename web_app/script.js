@@ -96,11 +96,13 @@ var BlockchainSplitwise = new ethers.Contract(contractAddress, abi, provider.get
 
 // TODO: Add any helper functions here!
 
+// Find all the users that the input user owes money to
 async function getNeighbors(user) {
 	var res = []
 	var users = await getUsers()
 	for (let i = 0; i < users.length; i++) {
 		var owed = await BlockchainSplitwise.lookup(user.toLowerCase(), users[i])
+		// Only when lookup(user, users[i]) > 0, that means users[i] is a neighbor of the user 
 		if (parseInt(owed) > 0) {
 			res.push(users[i])			
 		}
@@ -150,6 +152,9 @@ async function getLastActive(user) {
 // TODO: add an IOU ('I owe you') to the system
 // The person you owe money is passed as 'creditor'
 // The amount you owe them is passed as 'amount'
+
+// 如果现在 A -> B 10块, B -> C 10块，C 试图 -> A, 那么此时应该检查 A -> C 有没有path
+// 有的话就是cycle，没有就不是cycle.
 async function add_IOU(creditor, amount) {
 	var cycle = await doBFS(creditor, defaultAccount, getNeighbors);
 	await BlockchainSplitwise.connect(provider.getSigner(defaultAccount)).add_IOU(creditor.toLowerCase(), amount, cycle);
